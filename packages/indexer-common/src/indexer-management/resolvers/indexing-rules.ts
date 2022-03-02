@@ -2,11 +2,13 @@
 
 import {
   IndexerManagementModels,
-  IndexingRuleCreationAttributes,
   INDEXING_RULE_GLOBAL,
+  IndexingRuleCreationAttributes,
 } from '../models'
 import { IndexerManagementDefaults, IndexerManagementResolverContext } from '../client'
 import { Transaction } from 'sequelize/types'
+import { processIdentifier, SubgraphIdentifierType } from '@graphprotocol/indexer-common'
+import { SubgraphDeploymentID } from '@graphprotocol/common-ts'
 
 const resetGlobalRule = async (
   identifier: string,
@@ -29,6 +31,7 @@ export default {
     { identifier, merged }: { identifier: string; merged: boolean },
     { models }: IndexerManagementResolverContext,
   ): Promise<object | null> => {
+    [identifier] = await processIdentifier(identifier, { all: false, global: true })
     const rule = await models.IndexingRule.findOne({
       where: { identifier },
     })
@@ -64,6 +67,15 @@ export default {
     { rule }: { rule: IndexingRuleCreationAttributes },
     { models }: IndexerManagementResolverContext,
   ): Promise<object> => {
+    if (!rule.identifier) {
+      throw Error('Cannot set indexingRule without identifier')
+    }
+    // Always use base58 (IPFS hash) format for deployment identifiers
+    rule.identifier =
+      rule.identifierType == SubgraphIdentifierType.DEPLOYMENT
+        ? new SubgraphDeploymentID(rule.identifier).ipfsHash
+        : rule.identifier
+
     await models.IndexingRule.upsert(rule)
 
     // Since upsert succeeded, we _must_ have a rule
@@ -78,6 +90,7 @@ export default {
     { identifier }: { identifier: string },
     { models, defaults }: IndexerManagementResolverContext,
   ): Promise<boolean> => {
+    ;[identifier] = await processIdentifier(identifier, { all: false, global: true })
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return await models.IndexingRule.sequelize!.transaction(async (transaction) => {
       const numDeleted = await models.IndexingRule.destroy({
@@ -105,6 +118,15 @@ export default {
     { identifiers }: { identifiers: string[] },
     { models, defaults }: IndexerManagementResolverContext,
   ): Promise<boolean> => {
+    identifiers = await Promise.all(
+      identifiers.map(
+        async (identifier) =>
+          (
+            await processIdentifier(identifier, { all: false, global: true })
+          )[0],
+      ),
+    )
+
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return await models.IndexingRule.sequelize!.transaction(async (transaction) => {
       const numDeleted = await models.IndexingRule.destroy({

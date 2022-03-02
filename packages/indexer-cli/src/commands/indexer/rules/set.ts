@@ -10,7 +10,8 @@ import {
   setIndexingRule,
   printIndexingRules,
 } from '../../../rules'
-import { processIdentifier } from "@graphprotocol/indexer-common";
+import { processIdentifier, SubgraphIdentifierType} from "@graphprotocol/indexer-common";
+import { SubgraphDeploymentID } from "@graphprotocol/common-ts";
 
 const HELP = `
 ${chalk.bold('graph indexer rules set')} [options] global          <key1> <value1> ...
@@ -45,7 +46,8 @@ module.exports = {
     }
 
     try {
-      const [identifier, identifierType] = await processIdentifier(id, { all: false, global: true })
+      // eslint-disable-next-line prefer-const
+      let [identifier, identifierType] = await processIdentifier(id, { all: false, global: true })
       const config = loadValidatedConfig()
 
       //// Parse key/value pairs
