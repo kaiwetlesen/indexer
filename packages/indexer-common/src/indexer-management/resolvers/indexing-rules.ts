@@ -31,7 +31,7 @@ export default {
     { identifier, merged }: { identifier: string; merged: boolean },
     { models }: IndexerManagementResolverContext,
   ): Promise<object | null> => {
-    [identifier] = await processIdentifier(identifier, { all: false, global: true })
+    ;[identifier] = await processIdentifier(identifier, { all: false, global: true })
     const rule = await models.IndexingRule.findOne({
       where: { identifier },
     })

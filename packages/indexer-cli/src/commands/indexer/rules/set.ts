@@ -10,8 +10,7 @@ import {
   setIndexingRule,
   printIndexingRules,
 } from '../../../rules'
-import { processIdentifier, SubgraphIdentifierType} from "@graphprotocol/indexer-common";
-import { SubgraphDeploymentID } from "@graphprotocol/common-ts";
+import { processIdentifier } from '@graphprotocol/indexer-common'
 
 const HELP = `
 ${chalk.bold('graph indexer rules set')} [options] global          <key1> <value1> ...
